@@ -1,0 +1,50 @@
+name: Build hakuX (aarch64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      port_version:
+        description: 'hakux-trimui-smart-pro commit/tag'
+        default: 'b404a6228523f2bc7507209d815281629eee1e5f'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure beta release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="beta-${{ github.ref_name }}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --target "${{ github.ref_name }}" \
+              --title "Beta Build (${{ github.ref_name }})" \
+              --prerelease \
+              --notes "hakuX binaries built from ${{ github.ref_name }}" \
+            || true
+
+      - name: Build Docker image
+        run: docker build -t hakux-builder .
+
+      - name: Build hakuX
+        run: |
+          mkdir -p output
+          docker run --rm \
+            -e PORT_VERSION=${{ inputs.port_version || 'b404a6228523f2bc7507209d815281629eee1e5f' }} \
+            -v ${{ github.workspace }}/output:/output \
+            hakux-builder
+
+      - name: Upload binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd output
+          tar czf ../hakux-aarch64.tar.gz .
+          cd ..
+          gh release upload "beta-${{ github.ref_name }}" hakux-aarch64.tar.gz --clobber
