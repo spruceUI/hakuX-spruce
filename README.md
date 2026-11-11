@@ -33,6 +33,8 @@ The binary links against the device's SDL2 and loads the device's Vulkan driver.
 
 `patches/universal.py` lowers the glibc target and takes the panel's own display mode instead of 1280x720 only (`HAKUX_DISPLAY_WIDTH` and `HAKUX_DISPLAY_HEIGHT` force one).
 
+`patches/spruce_menu.py` lets the firmware own the Menu button: with `HAKUX_EXTERNAL_MENU` set, the emulator ignores the button and toggles its settings menu on `SIGUSR2`.
+
 `patches/*.patch` go through `git apply` on the port checkout, `patches/*.py` are run from its root. Both run after the port's sources are unpacked and before its own patch sequence.
 
 ## License
